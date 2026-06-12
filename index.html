@@ -1,0 +1,903 @@
+
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bangla LaTeX to PDF Creator | বাংলা ল্যাটেক্স এডিটর</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for Bengali and Code Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- KaTeX for beautiful Math Equations -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <!-- html2pdf.js for Client-Side PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body {
+            font-family: 'Hind Siliguri', sans-serif;
+        }
+        .font-bengali-serif {
+            font-family: 'Noto Serif Bengali', serif;
+        }
+        .font-code {
+            font-family: 'Fira Code', monospace;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        /* Simulated A4 Sheet */
+        .a4-page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 20mm;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            box-sizing: border-box;
+            position: relative;
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #a4-page-preview, #a4-page-preview * {
+                visibility: visible;
+            }
+            #a4-page-preview {
+                position: absolute;
+                left: 0;
+                top: 0;
+                box-shadow: none;
+                padding: 0;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col text-slate-800">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-md px-6 py-4 flex flex-wrap justify-between items-center gap-4">
+        <div class="flex items-center gap-3">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <div>
+                <h1 class="text-xl font-bold tracking-wide">Bangla LaTeX to PDF Creator</h1>
+                <p class="text-xs text-teal-100 font-light">রিয়েল-টাইম বাংলা ল্যাটেক্স এডিটর ও এআই সহকারী</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="toggleGuideModal()" class="bg-teal-700/50 hover:bg-teal-700 transition px-4 py-2 rounded-lg text-sm flex items-center gap-1.5 font-medium border border-teal-500/30">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                লোকাল সেটআপ গাইড
+            </button>
+            <button onclick="downloadTeXFile()" class="bg-teal-700/50 hover:bg-teal-700 transition px-4 py-2 rounded-lg text-sm flex items-center gap-1.5 font-medium border border-teal-500/30">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                .tex ফাইল ডাউনলোড
+            </button>
+            <button onclick="exportToPDF()" class="bg-white hover:bg-slate-100 transition text-teal-700 px-5 py-2 rounded-lg text-sm font-bold flex items-center gap-1.5 shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                পিডিএফ ডাউনলোড করুন
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
+        
+        <!-- Left Panel: Editor & AI Assistant -->
+        <section class="lg:col-span-5 flex flex-col border-r border-slate-200 overflow-y-auto">
+            
+            <!-- Quick Templates Selector -->
+            <div class="bg-slate-100 p-4 border-b border-slate-200 flex flex-col gap-2">
+                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">ডকুমেন্ট টেমপ্লেট নির্বাচন করুন</label>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <button onclick="loadTemplate('general')" class="template-btn active bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs py-2 px-3 rounded-lg shadow-sm transition">
+                        সাধারণ পত্র
+                    </button>
+                    <button onclick="loadTemplate('math')" class="template-btn bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-medium text-xs py-2 px-3 rounded-lg shadow-sm transition">
+                        গণিত অ্যাসাইনমেন্ট
+                    </button>
+                    <button onclick="loadTemplate('cv')" class="template-btn bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-medium text-xs py-2 px-3 rounded-lg shadow-sm transition">
+                        বাংলা জীবনবৃত্তান্ত (CV)
+                    </button>
+                    <button onclick="loadTemplate('literature')" class="template-btn bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-medium text-xs py-2 px-3 rounded-lg shadow-sm transition">
+                        কবিতা ও সাহিত্য
+                    </button>
+                </div>
+            </div>
+
+            <!-- Editor Wrapper -->
+            <div class="flex-1 flex flex-col relative min-h-[400px]">
+                <div class="bg-slate-800 text-slate-400 px-4 py-2 flex justify-between items-center text-xs">
+                    <span class="font-code font-medium">LaTeX Source Editor</span>
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-1.5">
+                            <label for="font-size">ফন্ট সাইজ:</label>
+                            <select id="font-size" onchange="adjustFontSize(this.value)" class="bg-slate-700 text-white rounded px-1.5 py-0.5 border-none outline-none">
+                                <option value="12px">12px</option>
+                                <option value="14px" selected>14px</option>
+                                <option value="16px">16px</option>
+                                <option value="18px">18px</option>
+                            </select>
+                        </div>
+                        <button onclick="clearEditor()" class="text-rose-400 hover:text-rose-300 font-medium">মুছে ফেলুন</button>
+                    </div>
+                </div>
+                
+                <!-- Code Area Container with Line Numbers -->
+                <div class="flex-1 flex bg-slate-900 overflow-hidden min-h-[300px]">
+                    <!-- Line numbers -->
+                    <div id="line-numbers" class="w-12 bg-slate-950 text-slate-600 font-code text-right pr-2 pt-4 select-none border-r border-slate-800 text-sm leading-6">
+                        1
+                    </div>
+                    <!-- Textarea -->
+                    <textarea id="latex-editor" oninput="handleEditorInput()" class="flex-1 bg-slate-900 text-slate-100 font-code p-4 resize-none outline-none overflow-y-auto leading-6 text-sm" spellcheck="false" placeholder="এখানে ল্যাটেক্স কোড লিখুন..."></textarea>
+                </div>
+            </div>
+
+            <!-- Gemini AI LaTeX Assistant Panel -->
+            <div class="bg-slate-100 border-t border-slate-200 p-4">
+                <div class="flex items-center gap-2 mb-3">
+                    <div class="bg-teal-100 text-teal-800 p-1.5 rounded-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-700">Gemini AI ল্যাটেক্স সহকারী</h3>
+                        <p class="text-xs text-slate-500">বাংলায় প্রম্পট লিখে যেকোনো ল্যাটেক্স কোড জেনারেট বা কারেক্ট করে নিন</p>
+                    </div>
+                </div>
+                
+                <div class="flex gap-2">
+                    <input id="ai-prompt-input" type="text" placeholder="যেমন: 'একটি পদার্থবিজ্ঞান পরীক্ষার প্রশ্নপত্র বানিয়ে দাও'..." class="flex-1 px-4 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                    <button id="ai-submit-btn" onclick="askAiAssistant()" class="bg-teal-600 hover:bg-teal-700 text-white font-medium text-sm px-5 py-2 rounded-lg shadow-sm transition flex items-center gap-2 whitespace-nowrap">
+                        <span id="ai-btn-text">জিজ্ঞাসা করুন</span>
+                        <svg id="ai-btn-spinner" class="animate-spin -ml-1 mr-3 h-4 w-4 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Quick AI prompts -->
+                <div class="flex flex-wrap gap-1.5 mt-2">
+                    <button onclick="applyQuickAiPrompt('কোড অপ্টিমাইজ করো এবং সুন্দর ডিজাইন করো')" class="text-xs bg-slate-200 hover:bg-slate-300 transition text-slate-600 px-2.5 py-1 rounded-full">⚡ কোড অপ্টিমাইজেশন</button>
+                    <button onclick="applyQuickAiPrompt('একটি জটিল গাণিতিক সমীকরণ ও প্রমাণ যোগ করো')" class="text-xs bg-slate-200 hover:bg-slate-300 transition text-slate-600 px-2.5 py-1 rounded-full">🧮 সমীকরণ যোগ করুন</button>
+                    <button onclick="applyQuickAiPrompt('কোডের কোনো ভুল বা এরর থাকলে তা সংশোধন করে দাও')" class="text-xs bg-slate-200 hover:bg-slate-300 transition text-slate-600 px-2.5 py-1 rounded-full">🛠️ বাগ ফিক্সিং</button>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Right Panel: Live PDF Preview Sheet -->
+        <section class="lg:col-span-7 flex flex-col bg-slate-200 p-6 overflow-y-auto">
+            
+            <div class="flex justify-between items-center mb-4 max-w-[210mm] mx-auto w-full">
+                <div class="flex items-center gap-2">
+                    <span class="flex h-2.5 w-2.5 relative">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                    </span>
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">লাইভ পিডিএফ প্রিভিউ (A4 আকারে)</span>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="zoomPreview(0.9)" class="bg-white hover:bg-slate-100 transition p-1.5 rounded-lg text-slate-600 border border-slate-300" title="জুম আউট">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"></path></svg>
+                    </button>
+                    <button onclick="zoomPreview(1.0)" class="bg-white hover:bg-slate-100 transition px-3 py-1 text-xs rounded-lg text-slate-600 border border-slate-300 font-medium">রিসেট</button>
+                    <button onclick="zoomPreview(1.1)" class="bg-white hover:bg-slate-100 transition p-1.5 rounded-lg text-slate-600 border border-slate-300" title="জুম ইন">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM12 7v6m3-3H9"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Page Container (Scaled for Preview) -->
+            <div id="preview-scale-wrapper" class="origin-top transition-transform duration-200">
+                <div id="a4-page-preview" class="a4-page font-bengali-serif prose max-w-none text-slate-900 leading-relaxed text-base break-words">
+                    <!-- Parsed HTML will render here -->
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Guide & Setup Modal -->
+    <div id="guide-modal" class="fixed inset-0 bg-slate-950/70 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm">
+        <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[85vh] overflow-y-auto shadow-2xl flex flex-col">
+            <div class="bg-teal-700 text-white p-6 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    <h2 class="text-xl font-bold">স্থানীয়ভাবে বাংলা ল্যাটেক্স সেটআপ গাইড</h2>
+                </div>
+                <button onclick="toggleGuideModal()" class="text-teal-100 hover:text-white transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto space-y-6 text-sm text-slate-600 leading-relaxed">
+                <div>
+                    <h3 class="text-base font-bold text-slate-800 mb-2">১. কেন XeLaTeX বা LuaLaTeX ব্যবহার করবেন?</h3>
+                    <p>বাংলা ইউনিকোড ফন্ট এবং যুক্তবর্ণ সুন্দরভাবে উপস্থাপনের জন্য ক্লাসিকাল PDFLaTeX এর বদলে <strong>XeLaTeX</strong> বা <strong>LuaLaTeX</strong> ব্যবহার করা আবশ্যক। এটি আপনার সিস্টেম ফন্টগুলো সরাসরি ল্যাটেক্স ফাইলে কম্পাইল করতে সাহায্য করে।</p>
+                </div>
+                
+                <hr class="border-slate-200" />
+                
+                <div>
+                    <h3 class="text-base font-bold text-slate-800 mb-2">২. ওভারলিফ (Overleaf)-এ বাংলা লেখার উপায়:</h3>
+                    <ol class="list-decimal pl-5 space-y-2">
+                        <li>প্রথমে আপনার Overleaf প্রজেক্টের বাম পাশের মেনুবার (Menu)-এ ক্লিক করুন।</li>
+                        <li><strong>Compiler</strong> অপশনটি পরিবর্তন করে <strong>XeLaTeX</strong> সিলেক্ট করুন।</li>
+                        <li>নিচের উদাহরণ কোডটি ব্যবহার করুন যেখানে গুগল ফন্ট থেকে <strong>Noto Sans Bengali</strong> লোড হবে:</li>
+                    </ol>
+                    <pre class="bg-slate-900 text-slate-100 font-code p-4 rounded-lg mt-3 overflow-x-auto text-xs">
+\documentclass{article}
+\usepackage{fontspec}
+\usepackage[bangla]{babel}
+
+% নিশ্চিত করুন যে আপনার সিস্টেমে ফন্টটি ইনস্টল করা আছে
+\babelfont{rm}{Noto Serif Bengali}
+
+\begin{document}
+বাংলা ভাষা বিকাশের ইতিহাস অত্যন্ত সমৃদ্ধ।
+\end{document}</pre>
+                </div>
+
+                <hr class="border-slate-200" />
+
+                <div>
+                    <h3 class="text-base font-bold text-slate-800 mb-2">৩. আপনার কম্পিউটারে অফলাইন কম্পাইলেশন:</h3>
+                    <p class="mb-2">অফলাইনে আপনার উইন্ডোজ বা ম্যাক কম্পিউটারে বাংলা ল্যাটেক্স কম্পাইল করতে চাইলে নিচে পদ্ধতি অনুসরণ করুন:</p>
+                    <ul class="list-disc pl-5 space-y-2">
+                        <li><strong>TeX Live:</strong> উইন্ডোজ ও ম্যাকের জন্য সম্পূর্ণ <strong>TeX Live</strong> ডাউনলোড করুন।</li>
+                        <li><strong>বাংলা ফন্ট:</strong> গুগল থেকে <a href="https://fonts.google.com/specimen/Noto+Serif+Bengali" target="_blank" class="text-teal-600 underline font-medium">Noto Serif Bengali</a> বা <a href="https://fonts.google.com/specimen/Hind+Siliguri" target="_blank" class="text-teal-600 underline font-medium">Hind Siliguri</a> ডাউনলোড করে কম্পিউটারে ইনস্টল (Install) করুন।</li>
+                        <li><strong>এডিটর:</strong> আপনি TeXstudio, VS Code বা TeXworks ব্যবহার করতে পারেন এবং ফাইলটি অবশ্যই <strong>XeLaTeX</strong> ইঞ্জিনের মাধ্যমে বিল্ড করবেন।</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="bg-slate-50 p-4 border-t border-slate-200 flex justify-end">
+                <button onclick="toggleGuideModal()" class="bg-slate-800 hover:bg-slate-900 text-white font-medium px-6 py-2 rounded-xl transition text-sm">ঠিক আছে</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert / Toast Notification -->
+    <div id="toast-notification" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 transition-transform duration-300 translate-y-24 z-50">
+        <div id="toast-icon-success" class="text-emerald-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <div id="toast-icon-error" class="text-rose-400 hidden">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <p id="toast-message" class="text-sm font-medium"></p>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // API Key logic: Set empty string for standard Canvas environment
+        const apiKey = "";
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'bengali-latex-editor';
+
+        // Preloaded LaTeX Templates
+        const templates = {
+            general: `% --- সাধারণ বাংলা ল্যাটেক্স টেমপ্লেট ---
+\\documentclass{article}
+\\usepackage{fontspec}
+\\usepackage[bangla]{babel}
+
+\\title{বাংলা ল্যাটেক্স পরিচিতি ও টিউটোরিয়াল}
+\\author{আহসান হাবিব}
+\\date{\\today}
+
+\\begin{document}
+\\maketitle
+
+\\section{ভূমিকা}
+ল্যাটেক্স (LaTeX) একটি অত্যন্ত শক্তিশালী টাইপসেটিং সিস্টেম। বিশেষ করে গাণিতিক সমীকরণ, বিজ্ঞান ও প্রযুক্তির গবেষণাপত্র এবং জটিল কাঠামোর ডকুমেন্ট সুন্দরভাবে উপস্থাপনের জন্য সারা বিশ্বে এটি বহুল ব্যবহৃত হয়।
+
+\\section{কেন ব্যবহার করবেন?}
+বাংলা ভাষায় ল্যাটেক্স ব্যবহারের মাধ্যমে খুব সহজেই চমৎকার ডিজাইনের প্রশ্নপত্র, গবেষণাপত্র এবং থিসিস তৈরি করা সম্ভব। নিচে এর মূল সুবিধাগুলো তালিকাভুক্ত করা হলো:
+
+\\begin{itemize}
+    \\item \\textbf{অসাধারণ টাইপসেটিং:} সুনির্দিষ্ট মার্জিন এবং ফন্ট নিয়ন্ত্রণ করা যায়।
+    \\item \\textbf{গাণিতিক সূত্র রেন্ডারিং:} সহজে সবচেয়ে জটিল গণিত সূত্র লেখা সম্ভব।
+    \\item \\textbf{স্বয়ংক্রিয় সূচিপত্র:} দীর্ঘ দলিলের জন্য সূচিপত্র ও রেফারেন্সিং স্বয়ংক্রিয়ভাবে তৈরি হয়।
+\\end{itemize}
+
+\\section{একটি চমৎকার উদাহরণ}
+আমরা যদি আলবার্ট আইনস্টাইনের আপেক্ষিকতার সূত্র লিখতে চাই, তবে তা সহজেই করতে পারি:
+\\begin{center}
+    $E = mc^2$
+\\end{center}
+
+দ্বিপদী উপপাদ্যের সাধারণ রূপটি নিচে দেওয়া হলো:
+\\[ (a+b)^n = \\sum_{k=0}^{n} \\binom{n}{k} a^{n-k} b^k \\]
+
+\\section{উপসংহার}
+বাংলা ভাষার ঐতিহ্য অক্ষুণ্ন রেখে ল্যাটেক্স এর প্রযুক্তিগত সুবিধা উপভোগ করতে XeLaTeX কম্পাইলার ব্যবহার করে ফন্ট হিসেবে Noto Serif Bengali ব্যবহার করা সেরা সিদ্ধান্ত।
+
+\\end{document}`,
+
+            math: `% --- গণিত অ্যাসাইনমেন্ট টেমপ্লেট ---
+\\documentclass{article}
+\\usepackage{fontspec}
+\\usepackage[bangla]{babel}
+
+\\title{এইচএসসি উচ্চতর গণিত অ্যাসাইনমেন্ট - ১}
+\\author{নাসিফ মোস্তফা (রোল: ১০৫)}
+\\date{১৪ই জুন, ২০২৬}
+
+\\begin{document}
+\\maketitle
+
+\\section{সমস্যা ১}
+গাণিতিক আরোহ পদ্ধতি (Mathematical Induction) ব্যবহার করে প্রমাণ করো যে, সকল ধনাত্মক পূর্ণসংখ্যা $n$ এর জন্য:
+\\[ 1^2 + 2^2 + 3^2 + \\dots + n^2 = \\frac{n(n+1)(2n+1)}{6} \\]
+
+\\subsection{সমাধান ও ধাপসমূহ}
+
+\\textbf{ধাপ ১ (ভিত্তি ধাপ):}
+ধরি, $n = 1$।
+\\\\
+বামপক্ষ: $1^2 = 1$
+\\\\
+ডানপক্ষ: $\\frac{1(1+1)(2(1)+1)}{6} = \\frac{1 \\times 2 \\times 3}{6} = 1$
+\\\\
+সুতরাং, $n = 1$ এর জন্য সমীকরণটি সত্য।
+
+\\textbf{ধাপ ২ (আরোহ ধাপ):}
+ধরি, প্রস্তাবটি $n = k$ এর জন্য সত্য। অর্থাৎ:
+\\[ 1^2 + 2^2 + 3^2 + \\dots + k^2 = \\frac{k(k+1)(2k+1)}{6} \\]
+
+এখন আমাদের দেখাতে হবে যে, সমীকরণটি $n = k+1$ এর জন্যও সত্য।
+\\\\
+বামপক্ষে $n = k+1$ তম পদ যোগ করে পাই:
+\\[ 1^2 + 2^2 + \\dots + k^2 + (k+1)^2 = \\frac{k(k+1)(2k+1)}{6} + (k+1)^2 \\]
+\\[ = (k+1) \\left[ \\frac{k(2k+1)}{6} + (k+1) \\right] \\]
+\\[ = (k+1) \\left[ \\frac{2k^2 + k + 6k + 6}{6} \\right] \\]
+\\[ = (k+1) \\left[ \\frac{2k^2 + 7k + 6}{6} \\right] \\]
+\\[ = \\frac{(k+1)(k+2)(2k+3)}{6} \\]
+
+যা সম্পূর্ণভাবে $n = k+1$ এর জন্য ডানপক্ষের রূপ প্রকাশ করে। 
+\\\\
+অতএব, গাণিতিক আরোহ বিধি অনুসারে সমীকরণটি সকল ধনাত্মক পূর্ণসংখ্যার জন্য সত্য। \\textbf{(প্রমাণিত)}
+
+\\end{document}`,
+
+            cv: `% --- বাংলা জীবনবৃত্তান্ত (CV) টেমপ্লেট ---
+\\documentclass{article}
+\\usepackage{fontspec}
+\\usepackage[bangla]{babel}
+
+\\begin{document}
+
+\\begin{center}
+    {\\huge \\textbf{সাদমান রহমান সাকিব}} \\\\
+    \\vspace{2mm}
+    \\textbf{সফটওয়্যার প্রকৌশলী} \\\\
+    ইমেইল: sadman@email.com | মোবাইল: ০১৭১১-২২৩৩৪৪ \\\\
+    ঠিকানা: ধানমন্ডি, ঢাকা, বাংলাদেশ | গিটহাব: github.com/sadman-sajib
+\\end{center}
+
+\\hr
+
+\\section*{ক্যারিয়ার উদ্দেশ্য}
+একজন উদ্যমী এবং সৃজনশীল সফটওয়্যার ইঞ্জিনিয়ার হিসেবে প্রযুক্তিগত ক্ষেত্রে অবদান রাখতে চাই এবং আধুনিক ওয়েব অ্যাপ্লিকেশন ডেভেলপমেন্টের মাধ্যমে মানুষের সমস্যা সমাধানে কাজ করতে আগ্রহী।
+
+\\section*{শিক্ষা জীবন}
+\\begin{itemize}
+    \\item \\textbf{কম্পিউটার বিজ্ঞান ও প্রকৌশল (CSE) - বি.এস.সি} \\\\
+    বাংলাদেশ প্রকৌশল বিশ্ববিদ্যালয় (BUET) | সময়কাল: ২০২০ - ২০২৪ \\\\
+    সিজিপিএ (CGPA): ৩.৮৫ / ৪.০০
+    \\item \\textbf{উচ্চ মাধ্যমিক সার্টিফিকেট (HSC)} \\\\
+    ঢাকা কলেজ, ঢাকা | জিপিএ (GPA): ৫.০০ / ৫.০০ (বিজ্ঞান বিভাগ)
+\\end{itemize}
+
+\\section*{কারিগরি দক্ষতা}
+\\begin{itemize}
+    \\item \\textbf{প্রোগ্রামিং ভাষা:} JavaScript, Python, C++, SQL, LaTeX
+    \\item \\textbf{ফ্রন্টএন্ড:} React.js, Tailwind CSS, HTML5, CSS3
+    \\item \\textbf{ব্যাকএন্ড:} Node.js, Express, REST APIs
+    \\item \\textbf{টুলস ও ডেটাবেস:} Git, Docker, MongoDB, PostgreSQL
+\\ font-bengali-serif \\end{itemize}
+
+\\section*{উল্লেখযোগ্য প্রজেক্ট সমূহ}
+\\begin{itemize}
+    \\item \\textbf{বাংলা ল্যাটেক্স রেন্ডারার অ্যাপ:} এটি একটি ক্লায়েন্ট-সাইড ওয়েব অ্যাপ্লিকেশন যা বাংলা যুক্তবর্ণ সমৃদ্ধ ল্যাটেক্স কোড তাৎক্ষণিকভাবে রেন্ডার এবং পিডিএফ ডাউনলোড করতে সক্ষম করে।
+    \\item \\textbf{স্বয়ংক্রিয় প্রশ্নপত্র জেনারেটর:} কৃত্রিম বুদ্ধিমত্তা সম্পন্ন একটি প্ল্যাটফর্ম যা স্কুল-কলেজের শিক্ষকদের স্বয়ংক্রিয় উপায়ে প্রশ্নপত্র তৈরি করে দেয়।
+\\end{itemize}
+
+\\end{document}`,
+
+            literature: `% --- কবিতা ও সাহিত্য টেমপ্লেট ---
+\\documentclass{article}
+\\usepackage{fontspec}
+\\usepackage[bangla]{babel}
+
+\\title{আমাদের ঐতিহ্য ও সংস্কৃতি}
+\\author{কাজী নজরুল ইসলাম (স্মরণে)}
+\\date{১৪ই জুন, ২০২৬}
+
+\\begin{document}
+\\maketitle
+
+\\begin{center}
+    \\textbf{\\Large বিদ্রোহী} \\\\
+    \\vspace{2mm}
+    \\textit{-- কাজী নজরুল ইসলাম}
+\\end{center}
+
+\\vspace{4mm}
+
+\\begin{center}
+    বল বীর - \\\\
+    বল উন্নত মম শির! \\\\
+    শির নেহারি’ আমারি নতশির ওই শিখর হিমাদ্রির! \\\\
+    বল বীর - \\\\
+    বল মহাবিশ্বের মহাকাশ ফুঁড়ি’ \\\\
+    চন্দ্র সূর্য গ্রহ তারা ফুঁড়ি’ \\\\
+    ভূলোক দ্যুলোক গোলক ভেদিয়া \\\\
+    খোদার আসন ‘আরশ’ ছেদিয়া, \\\\
+    উঠিয়াছি চির-বিস্ময় আমি বিশ্ববিধাতৃর! \\\\
+    মম ললাটে রুদ্র-ভগবান জ্বলে রাজ-রাজটীকা দীপ্ত জয়শ্রীর! \\\\
+    বল বীর - \\\\
+    চির-উন্নত মম শির!
+\\end{center}
+
+\\vspace{6mm}
+
+\\section*{কবিতার প্রেক্ষাপট}
+বিদ্রোহী কবিতাটি বাংলা সাহিত্যের ইতিহাসের অন্যতম কালজয়ী এবং যুগান্তকারী রচনা। ১৯২১ সালের ডিসেম্বর মাসে কবি নজরুল এই কবিতাটি রচনা করেছিলেন। এই কবিতার তীব্র তেজস্বী ছন্দ এবং পরাধীনতার বিরুদ্ধে সাহসী গর্জন তৎকালীন বিপ্লবী তরুণ সমাজকে গভীরভাবে উদ্বুদ্ধ করেছিল।
+
+\\end{document}`
+        };
+
+        let currentScale = 1.0;
+
+        // On Page Load
+        window.onload = function() {
+            // Load Default Template
+            loadTemplate('general');
+            // Auto Update Line Numbers
+            syncLineNumbers();
+        }
+
+        // Adjust Font Size inside textarea
+        function adjustFontSize(size) {
+            document.getElementById('latex-editor').style.fontSize = size;
+        }
+
+        // Load chosen Template
+        function loadTemplate(key) {
+            const editor = document.getElementById('latex-editor');
+            editor.value = templates[key];
+            
+            // Highlight current button
+            document.querySelectorAll('.template-btn').forEach(btn => {
+                btn.classList.remove('bg-emerald-600', 'text-white');
+                btn.classList.add('bg-white', 'text-slate-700', 'border', 'border-slate-200');
+            });
+            event.currentTarget.classList.remove('bg-white', 'text-slate-700', 'border', 'border-slate-200');
+            event.currentTarget.classList.add('bg-emerald-600', 'text-white');
+
+            handleEditorInput();
+            showToast('টেমপ্লেট সফলভাবে লোড হয়েছে!', 'success');
+        }
+
+        // Sync Line Numbers with Textarea scroll and input
+        function syncLineNumbers() {
+            const editor = document.getElementById('latex-editor');
+            const lineNums = document.getElementById('line-numbers');
+            
+            const linesCount = editor.value.split('\n').length;
+            let numbersHtml = '';
+            for (let i = 1; i <= linesCount; i++) {
+                numbersHtml += `<div>${i}</div>`;
+            }
+            lineNums.innerHTML = numbersHtml;
+
+            // Align scroll
+            lineNums.scrollTop = editor.scrollTop;
+        }
+
+        // Handle Editor Typing Input
+        function handleEditorInput() {
+            syncLineNumbers();
+            const sourceCode = document.getElementById('latex-editor').value;
+            const previewContainer = document.getElementById('a4-page-preview');
+            
+            // Dynamic Conversion & Rendering
+            previewContainer.innerHTML = parseLaTeXToHTML(sourceCode);
+        }
+
+        // Sync editor scrolling to line numbers
+        document.getElementById('latex-editor').addEventListener('scroll', function() {
+            document.getElementById('line-numbers').scrollTop = this.scrollTop;
+        });
+
+        // Clear Editor content
+        function clearEditor() {
+            document.getElementById('latex-editor').value = '';
+            syncLineNumbers();
+            document.getElementById('a4-page-preview').innerHTML = '<p class="text-slate-400 text-center mt-20">রেন্ডার করার কোনো ল্যাটেক্স কোড পাওয়া যায়নি।</p>';
+            showToast('এডিটর খালি করা হয়েছে!', 'success');
+        }
+
+        // Core Custom Parser: Convert LaTeX structural blocks to Beautiful Styled HTML
+        function parseLaTeXToHTML(latex) {
+            let html = latex;
+
+            // 1. Clean LaTeX Comments
+            html = html.replace(/(?<!\\)%.*$/gm, '');
+
+            // 2. Isolate and tokenize Math Equations (both $$ block and $ inline)
+            let mathTokens = [];
+            
+            // Protect block equations with structural $$
+            html = html.replace(/\$\$([\s\S]*?)\$\$/g, (match, code) => {
+                const token = `__BLOCK_MATH_${mathTokens.length}__`;
+                mathTokens.push({ type: 'block', code: code });
+                return token;
+            });
+
+            // Protect block equations with \[ ... \]
+            html = html.replace(/\\\[([\s\S]*?)\\\]/g, (match, code) => {
+                const token = `__BLOCK_MATH_${mathTokens.length}__`;
+                mathTokens.push({ type: 'block', code: code });
+                return token;
+            });
+
+            // Protect inline equations with $
+            html = html.replace(/\$([\s\S]*?)\$/g, (match, code) => {
+                if (code.trim() === '') return match;
+                const token = `__INLINE_MATH_${mathTokens.length}__`;
+                mathTokens.push({ type: 'inline', code: code });
+                return token;
+            });
+
+            // 3. Extract Document Metadata (Title, Author, Date)
+            let title = "";
+            let author = "";
+            let date = "";
+            
+            const titleMatch = html.match(/\\title\{([\s\S]*?)\}/);
+            if (titleMatch) title = titleMatch[1];
+
+            const authorMatch = html.match(/\\author\{([\s\S]*?)\}/);
+            if (authorMatch) author = authorMatch[1];
+
+            const dateMatch = html.match(/\\date\{([\s\S]*?)\}/);
+            if (dateMatch) date = dateMatch[1];
+
+            // 4. Extract Document Body (everything between \begin{document} and \end{document})
+            const beginDocIdx = html.indexOf('\\begin{document}');
+            if (beginDocIdx !== -1) {
+                html = html.substring(beginDocIdx + '\\begin{document}'.length);
+            }
+            const endDocIdx = html.indexOf('\\end{document}');
+            if (endDocIdx !== -1) {
+                html = html.substring(0, endDocIdx);
+            }
+
+            // 5. Convert Title Blocks
+            html = html.replace(/\\maketitle/g, `
+                <div class="text-center my-6 border-b border-slate-300 pb-5">
+                    <h1 class="text-3xl font-extrabold text-slate-800 tracking-normal leading-snug font-bengali-serif">${title}</h1>
+                    ${author ? `<p class="text-lg text-slate-600 font-medium mt-2 font-bengali-serif">${author}</p>` : ''}
+                    ${date ? `<p class="text-sm text-slate-500 mt-1 font-bengali-serif">${date}</p>` : ''}
+                </div>
+            `);
+
+            // 6. Parse LaTeX structural elements to Tailwind elements
+            html = html.replace(/\\section\*?\{([\s\S]*?)\}/g, '<h1 class="text-2xl font-bold border-b border-slate-300 pb-1 mt-8 mb-4 text-slate-800 font-bengali-serif">$1</h1>');
+            html = html.replace(/\\subsection\*?\{([\s\S]*?)\}/g, '<h2 class="text-xl font-bold mt-6 mb-3 text-slate-700 font-bengali-serif">$1</h2>');
+            html = html.replace(/\\subsubsection\*?\{([\s\S]*?)\}/g, '<h3 class="text-lg font-bold mt-4 mb-2 text-slate-700 font-bengali-serif">$1</h3>');
+
+            // Text Styles
+            html = html.replace(/\\textbf\{([\s\S]*?)\}/g, '<strong class="font-bold text-slate-900">$1</strong>');
+            html = html.replace(/\\textit\{([\s\S]*?)\}/g, '<em class="italic">$1</em>');
+            html = html.replace(/\\underline\{([\s\S]*?)\}/g, '<span class="underline">$1</span>');
+            html = html.replace(/\\texttt\{([\s\S]*?)\}/g, '<code class="bg-slate-100 text-slate-800 font-code text-xs px-1.5 py-0.5 rounded border border-slate-200">$1</code>');
+
+            // Center Align Element
+            html = html.replace(/\\begin\{center\}([\s\S]*?)\\end\{center\}/g, '<div class="text-center my-4 font-bengali-serif">$1</div>');
+
+            // Font Sizes (Simplified translation for preview beauty)
+            html = html.replace(/\\huge/g, '<span class="text-3xl leading-normal block">');
+            html = html.replace(/\\Large/g, '<span class="text-2xl leading-normal block">');
+            html = html.replace(/\\large/g, '<span class="text-xl leading-normal block">');
+            html = html.replace(/\\small/g, '<span class="text-sm leading-normal">');
+            html = html.replace(/\\tiny/g, '<span class="text-xs leading-normal">');
+
+            // HR Line separator
+            html = html.replace(/\\hr/g, '<hr class="my-5 border-t border-slate-300" />');
+            html = html.replace(/\\hrule/g, '<hr class="my-3 border-t border-slate-300" />');
+            html = html.replace(/\\hrulefill/g, '<hr class="my-3 border-t border-slate-300" />');
+
+            // Spacings
+            html = html.replace(/\\vspace\*?\{([\s\S]*?)\}/g, (match, space) => {
+                const val = parseFloat(space) || 4;
+                return `<div style="height: ${val * 1.5}mm"></div>`;
+            });
+            html = html.replace(/\\hspace\*?\{([\s\S]*?)\}/g, (match, space) => {
+                const val = parseFloat(space) || 4;
+                return `<span style="display: inline-block; width: ${val * 1.5}mm"></span>`;
+            });
+
+            // Clean list structures like itemize
+            html = html.replace(/\\begin\{itemize\}([\s\S]*?)\\end\{itemize\}/g, (match, content) => {
+                const items = content.split(/\\item/);
+                items.shift(); // Remove before first item
+                const listHtml = items.map(item => `<li class="relative pl-5 mb-1.5 before:content-['•'] before:absolute before:left-0 before:text-teal-600">${item.trim()}</li>`).join('');
+                return `<ul class="my-4 list-none text-slate-700 font-bengali-serif">${listHtml}</ul>`;
+            });
+
+            // Clean list structures like enumerate
+            html = html.replace(/\\begin\{enumerate\}([\s\S]*?)\\end\{enumerate\}/g, (match, content) => {
+                const items = content.split(/\\item/);
+                items.shift();
+                const listHtml = items.map((item, index) => `<li class="relative pl-6 mb-1.5 before:content-['${index + 1}.'] before:absolute before:left-0 before:text-teal-600 before:font-bold">${item.trim()}</li>`).join('');
+                return `<ol class="my-4 list-none text-slate-700 font-bengali-serif">${listHtml}</ol>`;
+            });
+
+            // Convert tabular tables to beautifully formatted HTML Tables
+            html = html.replace(/\\begin\{tabular\}\{([\s\S]*?)\}([\s\S]*?)\\end\{tabular\}/g, (match, cols, content) => {
+                const rows = content.trim().split(/\\\\/);
+                let tableHtml = '<div class="overflow-x-auto my-6"><table class="mx-auto border-collapse border border-slate-300 text-sm font-bengali-serif shadow-sm rounded-lg overflow-hidden">';
+                
+                rows.forEach((row, rowIndex) => {
+                    const rowContent = row.replace(/\\hline/g, '').trim();
+                    if (rowContent === '') return;
+                    
+                    tableHtml += `<tr class="${rowIndex === 0 ? 'bg-slate-50 font-bold text-slate-800' : 'hover:bg-slate-50'}">`;
+                    const cells = rowContent.split('&');
+                    cells.forEach(cell => {
+                        tableHtml += `<td class="border border-slate-200 px-5 py-2.5 text-slate-700">${cell.trim()}</td>`;
+                    });
+                    tableHtml += '</tr>';
+                });
+                
+                tableHtml += '</table></div>';
+                return tableHtml;
+            });
+
+            // Remove standalone \\ linebreaks and format empty lines as paragraphs
+            html = html.replace(/\\\\/g, '<br>');
+            html = html.replace(/(?<!>)\n\n+(?!<)/g, '</p><p class="mb-4 font-bengali-serif text-slate-700 leading-relaxed text-base">');
+            
+            // Wrap plain text in a paragraph if needed
+            html = `<p class="mb-4 font-bengali-serif text-slate-700 leading-relaxed text-base">${html}</p>`;
+
+            // 7. Inject back protected Math equations via KaTeX rendering
+            mathTokens.forEach((token, index) => {
+                const searchToken = `__${token.type.toUpperCase()}_MATH_${index}__`;
+                let renderedMath = '';
+                
+                try {
+                    renderedMath = katex.renderToString(token.code, {
+                        displayMode: token.type === 'block',
+                        throwOnError: false
+                    });
+                } catch (e) {
+                    renderedMath = `<span class="text-rose-500 font-mono text-xs border border-rose-300 bg-rose-50 px-1 rounded">Math Error: ${e.message}</span>`;
+                }
+
+                // Global replace
+                html = html.replace(new RegExp(searchToken, 'g'), renderedMath);
+            });
+
+            // Clean up empty wrapping elements
+            html = html.replace(/<p class="[^"]*">\s*<\/p>/g, '');
+
+            return html;
+        }
+
+        // Export Rendered Paper View directly to High Quality PDF
+        function exportToPDF() {
+            showToast('পিডিএফ জেনারেট হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...', 'success');
+            
+            const element = document.getElementById('a4-page-preview');
+            const opt = {
+                margin:       [15, 15, 15, 15], // Page margins in mm
+                filename:     'bangla-latex-document.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Run html2pdf generator
+            html2pdf().set(opt).from(element).save().then(() => {
+                showToast('পিডিএফ সফলভাবে ডাউনলোড হয়েছে!', 'success');
+            }).catch(err => {
+                showToast('পিডিএফ তৈরি করতে সমস্যা হয়েছে।', 'error');
+                console.error(err);
+            });
+        }
+
+        // Download LaTeX Raw Source (.tex)
+        function downloadTeXFile() {
+            const content = document.getElementById('latex-editor').value;
+            if (!content.trim()) {
+                showToast('ডাউনলোড করার মতো কোনো কোড নেই!', 'error');
+                return;
+            }
+
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'document.tex';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('ল্যাটেক্স (.tex) ফাইল সফলভাবে ডাউনলোড হয়েছে!', 'success');
+        }
+
+        // Zoom/Scale the Page Preview Window
+        function zoomPreview(scale) {
+            currentScale = scale;
+            const wrapper = document.getElementById('preview-scale-wrapper');
+            wrapper.style.transform = `scale(${scale})`;
+            showToast(`জুম স্কেল: ${Math.round(scale * 100)}%`, 'success');
+        }
+
+        // Toggle Guide Modal window
+        function toggleGuideModal() {
+            const modal = document.getElementById('guide-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        // Toggle Toast Notifications
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast-notification');
+            const msgNode = document.getElementById('toast-message');
+            const successIcon = document.getElementById('toast-icon-success');
+            const errorIcon = document.getElementById('toast-icon-error');
+
+            msgNode.textContent = message;
+
+            if (type === 'success') {
+                successIcon.classList.remove('hidden');
+                errorIcon.classList.add('hidden');
+            } else {
+                successIcon.classList.add('hidden');
+                errorIcon.classList.remove('hidden');
+            }
+
+            // Slide in
+            toast.classList.remove('translate-y-24');
+            toast.classList.add('translate-y-0');
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-24');
+                toast.classList.remove('translate-y-0');
+            }, 3000);
+        }
+
+        // Auto Quick Prompt click
+        function applyQuickAiPrompt(text) {
+            document.getElementById('ai-prompt-input').value = text;
+            askAiAssistant();
+        }
+
+        // Gemini API Implementation with Retries & Exponential Backoff
+        async function askAiAssistant() {
+            const promptInput = document.getElementById('ai-prompt-input');
+            const userPrompt = promptInput.value.trim();
+            const currentCode = document.getElementById('latex-editor').value;
+
+            if (!userPrompt) {
+                showToast('অনুগ্রহ করে এআই-এর জন্য নির্দেশনা লিখুন!', 'error');
+                return;
+            }
+
+            // Set Loading UI
+            const btnText = document.getElementById('ai-btn-text');
+            const spinner = document.getElementById('ai-btn-spinner');
+            const submitBtn = document.getElementById('ai-submit-btn');
+
+            btnText.classList.add('hidden');
+            spinner.classList.remove('hidden');
+            submitBtn.disabled = true;
+
+            // Constructing System Instructions and Prompt Body
+            const systemPrompt = `You are an expert Bengali LaTeX editor and typesetter assistant. 
+Your job is to generate CORRECT, compile-ready XeLaTeX or LuaLaTeX source code for Bengali documents.
+Always include packages like:
+\\usepackage{fontspec}
+\\usepackage[bangla]{babel}
+\\babelfont{rm}{Noto Serif Bengali}
+Ensure all math constructs (using $ or $$) are written mathematically correct.
+In your output code, ALWAYS include helpful comments in Bengali explaining sections.
+Provide ONLY the complete latex code starting with \\documentclass and ending with \\end{document}. 
+Do not include any chat preamble before or after the code block. Your response must be exclusively valid LaTeX source code inside markdown code block format.`;
+
+            const fullPrompt = `The user wants you to do the following task: "${userPrompt}". 
+Here is the current LaTeX source code in the editor:
+\`\`\`latex
+${currentCode}
+\`\`\`
+Generate a fully updated or new document following the instructions carefully. Ensure all Bengali text has proper orthography and syntax, and beautiful LaTeX styling.`;
+
+            // Call API with backoff retries
+            const responseText = await callGeminiWithBackoff(fullPrompt, systemPrompt);
+
+            if (responseText) {
+                // Parse out the code block
+                const cleanedCode = extractLatexFromMarkdown(responseText);
+                if (cleanedCode) {
+                    document.getElementById('latex-editor').value = cleanedCode;
+                    handleEditorInput();
+                    promptInput.value = '';
+                    showToast('এআই কোড আপডেট সম্পন্ন করেছে!', 'success');
+                } else {
+                    showToast('কোড বিন্যাস বুঝতে সমস্যা হয়েছে। এআই রেসপন্স চেক করুন।', 'error');
+                }
+            } else {
+                showToast('এআই সহকারী রেসপন্স করতে পারেনি। আবার চেষ্টা করুন।', 'error');
+            }
+
+            // Reset Loading UI
+            btnText.classList.remove('hidden');
+            spinner.classList.add('hidden');
+            submitBtn.disabled = false;
+        }
+
+        // Call Gemini Text Generation API with Exponential Backoff
+        async function callGeminiWithBackoff(userQuery, systemInstruction) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemInstruction }] }
+            };
+
+            let delay = 1000;
+            const maxRetries = 5;
+
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        return data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    }
+                } catch (error) {
+                    console.error(`Attempt ${i + 1} failed. Retrying...`, error);
+                }
+
+                // Exponential backoff
+                await new Promise(resolve => setTimeout(resolve, delay));
+                delay *= 2;
+            }
+
+            return null;
+        }
+
+        // Extract pure LaTeX string from Markdown Code Blocks
+        function extractLatexFromMarkdown(text) {
+            // Match ```latex ... ``` or ``` ... ``` or extract directly
+            const match = text.match(/
+
+
