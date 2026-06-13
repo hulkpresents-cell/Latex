@@ -1,14 +1,18 @@
-
+```html
 <!DOCTYPE html>
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bangla LaTeX to PDF Inverter | প্রো ল্যাটেক্স এডিটর</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for Bengali and Code Font -->
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- KaTeX for beautiful Math Equations -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <!-- html2pdf.js for Client-Side PDF Generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body { font-family: 'Hind Siliguri', sans-serif; }
@@ -32,6 +36,7 @@
 </head>
 <body class="bg-slate-100 min-h-screen flex flex-col text-slate-800">
 
+    <!-- Header -->
     <header class="bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-md px-6 py-4 flex flex-wrap justify-between items-center gap-4">
         <div class="flex items-center gap-3">
             <div class="bg-teal-500 p-2 rounded-lg text-slate-900">
@@ -52,8 +57,10 @@
         </div>
     </header>
 
+    <!-- Main Workspace -->
     <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
         
+        <!-- Left Panel: Resilient Code Editor -->
         <section class="lg:col-span-5 flex flex-col border-r border-slate-200 bg-slate-900 overflow-y-auto">
             <div class="bg-slate-950 text-slate-400 px-4 py-2.5 flex justify-between items-center text-xs border-b border-slate-800">
                 <span class="font-code text-teal-400 font-medium">> LATEX SOURCE CODE</span>
@@ -61,10 +68,13 @@
             </div>
             
             <div class="flex-1 flex overflow-hidden min-h-[400px]">
+                <!-- Line Numbers -->
                 <div id="line-numbers" class="w-12 bg-slate-950 text-slate-600 font-code text-right pr-2 pt-4 select-none border-r border-slate-800 text-sm leading-6">1</div>
+                <!-- Textarea -->
                 <textarea id="latex-editor" oninput="handleEditorInput()" class="flex-1 bg-slate-900 text-slate-200 font-code p-4 resize-none outline-none overflow-y-auto leading-6 text-sm" spellcheck="false" placeholder="আপনার ল্যাটেক্স কোড এখানে পেস্ট করুন..."></textarea>
             </div>
 
+            <!-- Mini AI Prompt Helper -->
             <div class="bg-slate-950 p-4 border-t border-slate-800">
                 <div class="flex gap-2">
                     <input id="ai-prompt-input" type="text" placeholder="কোডে কোনো পরিবর্তন করতে চান? এখানে বাংলায় বলুন..." class="flex-1 px-4 py-2 text-sm rounded-lg bg-slate-800 border border-slate-700 text-slate-200 focus:outline-none focus:border-teal-500">
@@ -73,6 +83,7 @@
             </div>
         </section>
 
+        <!-- Right Panel: Dynamic PDF Canvas -->
         <section class="lg:col-span-7 flex flex-col bg-slate-200 p-6 overflow-y-auto">
             <div class="flex justify-between items-center mb-4 max-w-[210mm] mx-auto w-full">
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
@@ -86,13 +97,16 @@
                 </div>
             </div>
 
+            <!-- Scale Wrapper -->
             <div id="preview-scale-wrapper" class="origin-top transition-transform duration-200">
                 <div id="a4-page-preview" class="a4-page font-bengali-serif prose max-w-none text-slate-900 leading-relaxed text-base break-words">
-                    </div>
+                    <!-- HTML Output -->
+                </div>
             </div>
         </section>
     </main>
 
+    <!-- Toast Notification -->
     <div id="toast-notification" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3.5 rounded-xl shadow-2xl transition-transform duration-300 translate-y-24 z-50 text-sm font-medium"></div>
 
     <script>
@@ -220,10 +234,9 @@
                 return `<ol class="my-3 space-y-1">${items.map((i, idx) => `<li class="relative pl-6 before:content-['${idx+1}.'] before:absolute before:left-0 before:text-teal-600 font-medium">${i.trim()}</li>`).join('')}</ol>`;
             });
 
-            // ৭. কাস্টম/অজানা এনভায়রনমেন্ট ক্লিনআপ (যেমন goldNote যা আপনার অ্যাপকে সাদা করে দিয়েছিল)
-            // এটি যেকোনো অজানা পরিবেশকে ক্র্যাশ না করিয়ে সুন্দর অ্যালার্ট বক্সে রূপান্তর করবে
+            // ৭. কাস্টম/অজানা এনভায়রনমেন্ট ক্লিনআপ
             html = html.replace(/\\begin\{([a-zA-Z]+)\}([\s\S]*?)\\end\{\1\}/g, `
-                <div class="my-4 p-4 bg-amber-50/60 border-l-4 border-amber-500 rounded-r-lg text-slate-700">
+                <div class="my-4 p-4 bg-amber-50/60 border-l-4 border-amber-500 rounded-r-lg text-slate-700 font-bengali-serif">
                     <span class="text-xs uppercase tracking-wider font-bold text-amber-700 block mb-1">Environment: $1</span>
                     $2
                 </div>`);
@@ -233,7 +246,7 @@
             html = html.replace(/\\\\/g, '<br>');
 
             // প্যারাগ্রাফ বিল্ড
-            html = html.split(/\n\n+/).map(p => p.trim() ? `<p class="mb-4 text-slate-800 leading-relaxed">${p}</p>` : '').join('');
+            html = html.split(/\n\n+/).map(p => p.trim() ? `<p class="mb-4 text-slate-800 leading-relaxed font-bengali-serif">${p}</p>` : '').join('');
 
             // ৮. ম্যাথ ইনজেক্ট ব্যাক
             mathTokens.forEach((token, index) => {
@@ -250,7 +263,6 @@
             return html;
         }
 
-        // অন্যান্য ইউটিলিটি ফাংশনসমূহ আগের মতোই ফাস্ট এবং রেসপন্সিভ থাকবে
         let currentScale = 1.0;
         function zoomPreview(scale) {
             currentScale = scale;
@@ -307,7 +319,9 @@
         async function askAiAssistant() {
             const prompt = document.getElementById('ai-prompt-input').value.trim();
             const currentCode = document.getElementById('latex-editor').value;
-            if(!prompt || !apiKey) { showToast('API Key বা প্রম্পট অনুপস্থিত!'); return; }
+            if(!prompt) { showToast('প্রম্পট লিখুন!'); return; }
+            if(!apiKey) { showToast('জেমিনি এপিআই কি (API Key) প্রয়োজন!'); return; }
+            
             showToast('AI কোড প্রসেস করছে...');
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             try {
@@ -321,5 +335,7 @@
                 });
                 const data = await res.json();
                 const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                const codeMatch = reply.match(/
+                if(reply) {
+                    const codeMatch = reply.match(/
 
+```
